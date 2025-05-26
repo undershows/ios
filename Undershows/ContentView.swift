@@ -1,34 +1,22 @@
 import SwiftUI
 import WebKit
-import Network
+import UserNotifications
+
+class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                willPresent notification: UNNotification,
+                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.banner, .sound])
+    }
+}
 
 struct WebView: UIViewRepresentable {
     let url: URL
-    let monitor = NWPathMonitor()
 
     func makeUIView(context: Context) -> WKWebView {
         let webView = WKWebView()
-        
-        monitor.pathUpdateHandler = { path in
-            DispatchQueue.main.async {
-                if path.status == .satisfied {
-                    webView.load(URLRequest(url: url))
-                } else {
-                    let html = """
-                    <html>
-                      <body style='font-family: -apple-system; padding: 40px; text-align: center;'>
-                        <h2>Você está offline</h2>
-                        <p>Conecte-se à internet para continuar navegando nos shows.</p>
-                      </body>
-                    </html>
-                    """
-                    webView.loadHTMLString(html, baseURL: nil)
-                }
-            }
-        }
 
-        let queue = DispatchQueue(label: "Monitor")
-        monitor.start(queue: queue)
+        webView.load(URLRequest(url: url))
 
         webView.scrollView.minimumZoomScale = 1.0
         webView.scrollView.maximumZoomScale = 5.0
@@ -41,9 +29,44 @@ struct WebView: UIViewRepresentable {
 }
 
 struct ContentView: View {
+    let notificationDelegate = NotificationDelegate()
+    
     var body: some View {
         WebView(url: URL(string: "https://shows.undershows.com.br")!)
             .ignoresSafeArea()
+            .onAppear {
+                UNUserNotificationCenter.current().delegate = notificationDelegate
+                requestNotificationPermissionAndSchedule()
+            }
     }
 }
 
+func requestNotificationPermissionAndSchedule() {
+    UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+        if granted {
+            print("Permissão concedida")
+            scheduleWelcomeNotification()
+        } else {
+            print("Permissão negada ou erro: \(String(describing: error))")
+        }
+    }
+}
+
+func scheduleWelcomeNotification() {
+    let content = UNMutableNotificationContent()
+    content.title = "Undershows"
+    content.body = "Você pode ver shows underground do Brasil inteiro. Boa diversão!"
+    content.sound = .default
+
+    let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 3, repeats: false)
+
+    let request = UNNotificationRequest(identifier: "welcomeNotification", content: content, trigger: trigger)
+
+    UNUserNotificationCenter.current().add(request) { error in
+        if let error = error {
+            print("Erro ao agendar notificação: \(error)")
+        } else {
+            print("Notificação de boas-vindas agendada com sucesso.")
+        }
+    }
+}
