@@ -19,7 +19,14 @@ O app carrega o site [https://shows.undershows.com.br](https://shows.undershows.
 
 ## 🚀 Status
 
-O app está em fase final de testes. Em breve será submetido à App Store.
+Depois de muitas tentativas junto a Apple, desistimos, todos ajustes foram em vão, eles não aceitam web content.
+
+Quem quiser instalar via método PWA vai funcionar
+
+1) Abra o Safari pelo iPhone;
+2) Digite https://shows.undershows.com.br;
+3) Clique em Compartilhar e depois em Área de Trabalho;
+4) Pronto, o app está instalado no teu iPhone, quando você abrir pelo ícone da Undershows na área de trabalho, ele abrirá em tela cheia, igual qualquer outro app.
 
 ---
 
